@@ -1,112 +1,184 @@
-# midsave
+<div align="center">
 
-**Crash-test your app's data. One command.**
+# 💥 midsave
 
-midsave starts your app, kills it suddenly at a random moment (like a crash or a battery dying), restarts the check, and tells you if any data was lost or half-written. It repeats this many times so you find the bugs before your users do.
+### Your app saves data. What happens if it dies *mid-save*?
+
+**midsave pulls the plug on your app hundreds of times and tells you exactly when your data breaks.**
+
+![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white)
+![Windows](https://img.shields.io/badge/Windows-✓-0078D6?logo=windows&logoColor=white)
+![macOS](https://img.shields.io/badge/macOS-✓-000000?logo=apple&logoColor=white)
+![Linux](https://img.shields.io/badge/Linux-✓-FCC624?logo=linux&logoColor=black)
+![License](https://img.shields.io/badge/license-MIT-green)
+![PRs welcome](https://img.shields.io/badge/PRs-welcome-ff69b4)
+
+</div>
+
+---
+
+## 🔌 The 10-second pitch
+
+You pay ₹500. Your phone dies halfway through.
+The money left your account. The shop never got it.
+
+That's a **crash in the middle of a save**, and almost nobody tests for it, because testing it by hand means crashing your app over and over and checking the data every time.
+
+**midsave does that for you. Automatically. In one command.**
+
+---
+
+## ⚡ See it catch a bug
+
+Same checker. Two apps. One is safe, one has a hidden bug.
+
+<table>
+<tr>
+<th>✅ Safe app</th>
+<th>❌ Buggy app</th>
+</tr>
+<tr>
+<td>
 
 ```
-midsave run 1:  ok
-midsave run 2:  BROKEN (killed after 1.803s)
-...
+run 1:  ok
+run 2:  ok
+run 3:  ok
+run 4:  ok
+run 5:  ok
+run 6:  ok
+run 7:  ok
+run 8:  ok
+run 9:  ok
+run 10: ok
+
+0 of 10 runs lost or broke data
+```
+
+</td>
+<td>
+
+```
+run 1:  ok
+run 2:  BROKEN (killed after 1.803s)
+run 3:  BROKEN (killed after 1.169s)
+run 4:  ok
+run 5:  BROKEN (killed after 2.157s)
+run 6:  BROKEN (killed after 1.006s)
+run 7:  ok
+run 8:  BROKEN (killed after 1.945s)
+run 9:  BROKEN (killed after 1.207s)
+run 10: BROKEN (killed after 1.378s)
+
 7 of 10 runs lost or broke data
 ```
 
-## Why
+</td>
+</tr>
+</table>
 
-Most apps that save data (databases, queues, payment apps, game saves) are never tested for "what if it crashes in the middle of saving?" Testing it by hand is slow and boring, so people skip it.
+The buggy app writes each number in two steps. Kill it in between and you get **half a number** on disk: a *torn write*. midsave found it 7 times out of 10.
 
-Tools for this already exist (CrashMonkey, ALICE, LazyFS, Jepsen), but they are research or expert tools, mostly Linux-only, and hard to set up.
+---
 
-midsave aims to be the simple one:
-
-- one command
-- works on Windows, Mac and Linux
-- plain-English results
-
-## How it works
+## 🧠 How it works
 
 ```
-for each run:
-  1. delete old data (fresh start)
-  2. start your app
-  3. wait a random time
-  4. kill it
-  5. run your checker
-  6. record: ok or BROKEN
+        ┌──────────────┐
+        │ start app    │
+        └──────┬───────┘
+               ▼
+        ┌──────────────┐
+        │ wait random  │   ← could be 0.2s, could be 2s
+        └──────┬───────┘
+               ▼
+        ┌──────────────┐
+        │ 💥 KILL IT   │   ← no warning, no cleanup
+        └──────┬───────┘
+               ▼
+        ┌──────────────┐
+        │ run checker  │   ← is the data still okay?
+        └──────┬───────┘
+               ▼
+          ok or BROKEN
+               │
+               └── repeat × N
 ```
 
-You write the **checker**, because only you know what "correct data" means for your app. The checker is any program that:
+You bring a **checker**: any program that exits `0` if the data is fine, and anything else if it's broken. Only you know what "correct" means for your app, so you decide.
 
-- exits with code `0` if the data is fine
-- exits with any other code if the data is broken
+---
 
-## Quick start
+## 🚀 Try it in 60 seconds
 
-Requires Go 1.22+.
-
-```
+```bash
 git clone https://github.com/sharanyashetty013-droid/midsave.git
 cd midsave
 
-go build -o bin/writer.exe ./examples/writer
 go build -o bin/badwriter.exe ./examples/badwriter
 go build -o bin/check.exe ./examples/check
-```
 
-Test the buggy app:
-
-```
 go run ./cmd/midsave --app bin/badwriter.exe --check bin/check.exe --clean data.txt --runs 10
 ```
 
-Test the safe app:
-
-```
-go run ./cmd/midsave --app bin/writer.exe --check bin/check.exe --clean data.txt --runs 10
-```
-
-On Mac/Linux, drop the `.exe`.
-
-## Flags
+> On Mac/Linux, drop the `.exe`.
 
 | Flag | What it does | Default |
 |---|---|---|
 | `--app` | the program to crash-test | required |
 | `--check` | the program that checks the data | required |
 | `--clean` | file to delete before each run | none |
-| `--runs` | how many times to crash it | 10 |
+| `--runs` | how many times to crash it | `10` |
 
-## Examples
+---
 
-| Example | What it does | Result |
-|---|---|---|
-| `examples/writer` | writes numbers 1 to 1000, one full line at a time | 0 of 10 broken |
-| `examples/badwriter` | writes each number in two parts (a "torn write") | 7 of 10 broken |
-| `examples/check` | checks the file has 1, 2, 3... with no broken lines | the checker |
+## 🤔 Doesn't this already exist?
 
-## Limitations
+Sort of, but not for everyday developers.
 
-Killing a process is **not** the same as a power cut. When a process is killed, data it already handed to the operating system still reaches the disk. So midsave v0.1 catches **app-level** bugs:
+| | Who it's for | Windows? | Setup |
+|---|---|---|---|
+| CrashMonkey | file system researchers | ❌ | heavy |
+| ALICE / Pathfinder | academic research | ❌ | heavy |
+| LazyFS | storage experts | ❌ | FUSE + config |
+| Jepsen | distributed systems experts | ❌ | heavy |
+| **midsave** | **any developer** | ✅ | **one command** |
 
-- data written in more than one step (torn writes)
-- data still sitting in the app's memory
-- unsafe file replacing
+---
 
-Simulating a real power cut (data the OS never wrote to disk) is planned for a later version.
+## ⚠️ Honest limits
 
-## Roadmap
+Killing a process ≠ a real power cut. Data your app already handed to the OS still reaches the disk when only the process dies. So **v0.1 catches app-level bugs**:
 
-- [ ] `--seed` flag to replay a crash exactly
-- [ ] better report: show where and why the data broke
+- 🧩 data written in more than one step (torn writes)
+- 🧠 data still sitting in your app's memory
+- 📄 unsafe file replacing
+
+Simulating a true power cut is on the roadmap.
+
+---
+
+## 🗺️ Roadmap
+
+- [ ] `--seed` to replay any crash exactly
+- [ ] report *which* line broke and why
 - [ ] JSON output
-- [ ] GitHub Action
-- [ ] SQLite example
-- [ ] power-cut mode
+- [ ] GitHub Action: crash-test on every push
+- [ ] SQLite + Postgres examples
+- [ ] 🔌 power-cut mode
 
-## Contributing
+---
 
-Issues and PRs are welcome. Look for issues labelled `good first issue`.
+## 🤝 Contribute
 
-## License
+New to open source? Perfect. Issues labelled **`good first issue`** are small, clear and ready to pick up. Every PR gets a reply within a day or two.
 
-MIT
+---
+
+<div align="center">
+
+**If midsave saved your data, give it a ⭐**
+
+Made with 💥 by [Sharanya L Shetty](https://github.com/sharanyashetty013-droid)
+
+</div>
