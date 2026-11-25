@@ -1,23 +1,21 @@
 <div align="center">
 
-# 💥 midsave
+# midsave
 
 ### Your app saves data. What happens if it dies *mid-save*?
 
 **midsave pulls the plug on your app hundreds of times and tells you exactly when your data breaks.**
 
 ![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white)
-![Windows](https://img.shields.io/badge/Windows-✓-0078D6?logo=windows&logoColor=white)
-![macOS](https://img.shields.io/badge/macOS-✓-000000?logo=apple&logoColor=white)
-![Linux](https://img.shields.io/badge/Linux-✓-FCC624?logo=linux&logoColor=black)
+![Windows](https://img.shields.io/badge/Windows-supported-0078D6?logo=windows&logoColor=white)
+![macOS](https://img.shields.io/badge/macOS-supported-000000?logo=apple&logoColor=white)
+![Linux](https://img.shields.io/badge/Linux-supported-FCC624?logo=linux&logoColor=black)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![PRs welcome](https://img.shields.io/badge/PRs-welcome-ff69b4)
 
 </div>
 
----
-
-## 🔌 The 10-second pitch
+## The problem
 
 You pay ₹500. Your phone dies halfway through.
 The money left your account. The shop never got it.
@@ -26,16 +24,14 @@ That's a **crash in the middle of a save**, and almost nobody tests for it, beca
 
 **midsave does that for you. Automatically. In one command.**
 
----
-
-## ⚡ See it catch a bug
+## See it catch a bug
 
 Same checker. Two apps. One is safe, one has a hidden bug.
 
 <table>
 <tr>
-<th>✅ Safe app</th>
-<th>❌ Buggy app</th>
+<th>Safe app</th>
+<th>Buggy app</th>
 </tr>
 <tr>
 <td>
@@ -79,9 +75,7 @@ run 10: BROKEN (killed after 1.378s)
 
 The buggy app writes each number in two steps. Kill it in between and you get **half a number** on disk: a *torn write*. midsave found it 7 times out of 10.
 
----
-
-## 🧠 How it works
+## How it works
 
 ```
         ┌──────────────┐
@@ -93,7 +87,7 @@ The buggy app writes each number in two steps. Kill it in between and you get **
         └──────┬───────┘
                ▼
         ┌──────────────┐
-        │ 💥 KILL IT   │   ← no warning, no cleanup
+        │ kill it      │   ← no warning, no cleanup
         └──────┬───────┘
                ▼
         ┌──────────────┐
@@ -107,9 +101,7 @@ The buggy app writes each number in two steps. Kill it in between and you get **
 
 You bring a **checker**: any program that exits `0` if the data is fine, and anything else if it's broken. Only you know what "correct" means for your app, so you decide.
 
----
-
-## 🚀 Try it in 60 seconds
+## Try it in 60 seconds
 
 ```bash
 git clone https://github.com/sharanyashetty013-droid/midsave.git
@@ -130,55 +122,49 @@ go run ./cmd/midsave --app bin/badwriter.exe --check bin/check.exe --clean data.
 | `--clean` | file to delete before each run | none |
 | `--runs` | how many times to crash it | `10` |
 
----
-
-## 🤔 Doesn't this already exist?
+## Doesn't this already exist?
 
 Sort of, but not for everyday developers.
 
 | | Who it's for | Windows? | Setup |
 |---|---|---|---|
-| CrashMonkey | file system researchers | ❌ | heavy |
-| ALICE / Pathfinder | academic research | ❌ | heavy |
-| LazyFS | storage experts | ❌ | FUSE + config |
-| Jepsen | distributed systems experts | ❌ | heavy |
-| **midsave** | **any developer** | ✅ | **one command** |
+| CrashMonkey | file system researchers | No | heavy |
+| ALICE / Pathfinder | academic research | No | heavy |
+| LazyFS | storage experts | No | FUSE + config |
+| Jepsen | distributed systems experts | No | heavy |
+| **midsave** | **any developer** | Yes | **one command** |
 
----
+## Limits
 
-## ⚠️ Honest limits
+Killing a process is not the same as a real power cut. Data your app already handed to the OS still reaches the disk when only the process dies. So **v0.1 catches app-level bugs**:
 
-Killing a process ≠ a real power cut. Data your app already handed to the OS still reaches the disk when only the process dies. So **v0.1 catches app-level bugs**:
-
-- 🧩 data written in more than one step (torn writes)
-- 🧠 data still sitting in your app's memory
-- 📄 unsafe file replacing
+- data written in more than one step (torn writes)
+- data still sitting in your app's memory
+- unsafe file replacing
 
 Simulating a true power cut is on the roadmap.
 
----
-
-## 🗺️ Roadmap
+## Roadmap
 
 - [ ] `--seed` to replay any crash exactly
 - [ ] report *which* line broke and why
 - [ ] JSON output
-- [ ] GitHub Action: crash-test on every push
+- [ ] GitHub Action to crash-test on every push
 - [ ] SQLite + Postgres examples
-- [ ] 🔌 power-cut mode
+- [ ] power-cut mode
 
----
+## Contributing
 
-## 🤝 Contribute
+New to open source? Issues labelled **`good first issue`** are small, clear and ready to pick up. Every PR gets a reply within a day or two.
 
-New to open source? Perfect. Issues labelled **`good first issue`** are small, clear and ready to pick up. Every PR gets a reply within a day or two.
+## License
 
----
+MIT. See [LICENSE](LICENSE).
 
 <div align="center">
 
-**If midsave saved your data, give it a ⭐**
+If midsave helped you, consider starring the repo.
 
-Made with 💥 by [Sharanya L Shetty](https://github.com/sharanyashetty013-droid)
+Built by [Sharanya L Shetty](https://github.com/sharanyashetty013-droid)
 
 </div>
